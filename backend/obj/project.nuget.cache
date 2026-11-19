@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "dgSpecHash": "I6nik6xKMwY=",
+  "success": true,
+  "projectFilePath": "D:\\Task_management_Assignment\\team-task-board\\backend\\TeamTaskBoard.Api.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\CTMS\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.10\\microsoft.aspnetcore.openapi.10.0.10.nupkg.sha512",
+    "C:\\Users\\CTMS\\.nuget\\packages\\microsoft.openapi\\2.0.0\\microsoft.openapi.2.0.0.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Microsoft.OpenApi' 2.0.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-v5pm-xwqc-g5wc",
+      "projectPath": "D:\\Task_management_Assignment\\team-task-board\\backend\\TeamTaskBoard.Api.csproj",
+      "warningLevel": 1,
+      "filePath": "D:\\Task_management_Assignment\\team-task-board\\backend\\TeamTaskBoard.Api.csproj",
+      "libraryId": "Microsoft.OpenApi",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
+}
