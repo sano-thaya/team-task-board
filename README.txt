@@ -50,3 +50,18 @@ Task API endpoints:
 * `DELETE /api/projects/{projectId}/tasks/{taskId}` deletes a task.
 
 Run `dotnet ef database update --project backend --startup-project backend` after configuring MySQL to apply the `AddTasks` migration. Run `dotnet test backend.Tests/TeamTaskBoard.Api.Tests.csproj` for task authorization and validation tests. The task UI uses the same Firebase ID token and `AuthGuard` as the existing project pages.
+
+Task comments and live communication
+------------------------------------
+Comments are stored in Cloud Firestore under `projects/{projectId}/tasks/{taskId}/comments/{commentId}`. The ASP.NET Core API validates the Firebase identity and MySQL project/task membership before reading or creating a comment, and derives the author from the authenticated Firebase UID. The frontend subscribes to a non-sensitive `commentEvents/{projectId}_{taskId}` Firestore marker with `onSnapshot`; when the marker changes, it refreshes the authorized comment list through the API.
+
+The Firestore rules are in `firestore.rules`. Comment documents are not directly readable or writable by browser clients; only authenticated clients may read the change marker, while the trusted backend Admin SDK bypasses rules for comment storage and event updates. Deploy the rules with the Firebase CLI after selecting the existing Firebase project:
+
+`firebase deploy --only firestore:rules`
+
+Comment API endpoints:
+
+* `GET /api/projects/{projectId}/tasks/{taskId}/comments` lists comments chronologically.
+* `POST /api/projects/{projectId}/tasks/{taskId}/comments` creates a comment with `{ "text": "..." }`.
+
+The backend uses Application Default Credentials for the Firestore Admin client, the same credential approach already used by Firebase Admin token verification. `Firebase:ProjectId` or `FIREBASE_PROJECT_ID` must be configured; no service-account JSON is exposed to the frontend.

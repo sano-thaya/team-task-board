@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using TeamTaskBoard.Api.Data;
 using Microsoft.AspNetCore.Authentication;
 using System.Text.Json.Serialization;
+using Google.Cloud.Firestore;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -65,12 +66,14 @@ var firebaseApp = FirebaseApp.Create(new AppOptions
 // Make Firebase services available through dependency injection.
 builder.Services.AddSingleton(firebaseApp);
 builder.Services.AddSingleton(FirebaseAuth.GetAuth(firebaseApp));
+builder.Services.AddSingleton(FirestoreDb.Create(firebaseProjectId));
 
 // Register our token verification service.
 builder.Services.AddScoped<FirebaseTokenService>();
 builder.Services.AddScoped<IUserSyncService, UserSyncService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
 
 var app = builder.Build();
 
