@@ -182,15 +182,3 @@ The current automated backend suite contains 8 passing service tests covering pr
 
 For live comments and replies, use two authenticated browser sessions, open the same task, post a comment or reply in one session, and confirm the other session updates without a page refresh. Firebase credentials, a running API, MySQL, and Firestore access are required for this manual test.
 
-
-
-## Known gaps and recommended next steps
-
-1. Add drag-and-drop only if it can be introduced without compromising keyboard status changes.
-2. Add frontend component/browser tests and Firebase integration tests.
-3. Extend the SQL seed with a controlled overdue development record when manual report testing needs it.
-4. Remove the interviewer-only section from any externally submitted copy of the assignment document if it is still present outside this repository.
-
-## Security note
-
-Never commit Firebase service-account credentials, private keys, `.env.local`, or other secrets. The Firebase web configuration is intended for the frontend, but backend credentials must remain in local/server configuration.
