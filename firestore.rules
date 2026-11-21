@@ -1,0 +1,18 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Comment bodies are read and written only through the authenticated API,
+    // which checks MySQL project membership before using the Admin SDK.
+    match /projects/{projectId}/tasks/{taskId}/comments/{commentId} {
+      allow read, write: if false;
+    }
+
+    // The browser listens to this non-sensitive marker to refresh comments.
+    // Only the trusted backend Admin SDK can update it.
+    match /commentEvents/{eventId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+  }
+}
