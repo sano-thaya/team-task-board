@@ -65,3 +65,13 @@ Comment API endpoints:
 * `POST /api/projects/{projectId}/tasks/{taskId}/comments` creates a comment with `{ "text": "..." }`.
 
 The backend uses Application Default Credentials for the Firestore Admin client, the same credential approach already used by Firebase Admin token verification. `Firebase:ProjectId` or `FIREBASE_PROJECT_ID` must be configured; no service-account JSON is exposed to the frontend.
+
+Overdue task reporting
+----------------------
+Project owners can view the overdue task report on the project details page. It includes tasks whose UTC due date is earlier than the current UTC time and whose status is not `Completed`, grouped by assigned team member. The API returns `404` for users who are not the project owner so report availability is not disclosed.
+
+Report endpoint:
+
+* `GET /api/projects/{projectId}/reports/overdue-tasks` returns grouped overdue tasks and requires a Firebase Bearer token.
+
+The report uses the existing MySQL `Tasks` and `Users` tables and does not add a migration. The frontend renders it only for the owner, but the backend authorization check is authoritative. To test it manually, sign in as a project owner and open a project containing an open task after its due date. A member should not receive the report. Completed and future-dated tasks are excluded.

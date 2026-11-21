@@ -74,6 +74,7 @@ builder.Services.AddScoped<IUserSyncService, UserSyncService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<IOverdueTaskReportService, OverdueTaskReportService>();
 
 var app = builder.Build();
 

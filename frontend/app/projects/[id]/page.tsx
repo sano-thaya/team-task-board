@@ -4,12 +4,15 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { AuthGuard } from "../../../components/AuthGuard";
+import { useAuth } from "../../../components/AuthProvider";
+import { OverdueTaskReport } from "../../../components/OverdueTaskReport";
 import { ProjectTasks } from "../../../components/ProjectTasks";
 import { deleteProject, getProject, updateProject, type Project } from "../../../lib/projects";
 
 function ProjectDetailsContent() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { user } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -75,6 +78,7 @@ function ProjectDetailsContent() {
           <form onSubmit={submit} className="rounded-xl bg-white p-6 shadow-sm"><h2 className="text-xl font-bold text-slate-900">Edit project</h2><label className="mt-5 block text-sm font-medium text-slate-700">Name<input required maxLength={150} value={name} onChange={event => setName(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" /></label><label className="mt-4 block text-sm font-medium text-slate-700">Description<textarea maxLength={2000} value={description} onChange={event => setDescription(event.target.value)} rows={5} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" /></label><label className="mt-4 block text-sm font-medium text-slate-700">Member emails<input value={members} onChange={event => setMembers(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" /></label>{success && <p role="status" className="mt-4 text-sm text-green-700">{success}</p>}<button disabled={saving} className="mt-6 w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-60">{saving ? "Saving…" : "Save changes"}</button><button type="button" onClick={remove} className="mt-3 w-full rounded-lg border border-red-200 px-4 py-3 font-semibold text-red-600 hover:bg-red-50">Delete project</button></form>
         </div>
         <ProjectTasks project={project} />
+        {user?.uid === project.owner.firebaseUid && <OverdueTaskReport projectId={project.id} />}
       </>}
     </div>
   </main>;
