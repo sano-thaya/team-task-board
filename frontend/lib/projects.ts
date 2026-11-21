@@ -1,6 +1,6 @@
 import { auth } from "./firebase";
 
-export type ProjectUser = { firebaseUid: string; displayName: string; email: string };
+export type ProjectUser = { id: number; firebaseUid: string; displayName: string; email: string };
 export type Project = {
   id: number;
   name: string;

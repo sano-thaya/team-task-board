@@ -91,8 +91,8 @@ public sealed class ProjectService : IProjectService
         project.Id,
         project.Name,
         project.Description,
-        new ProjectUserResponse(project.Owner.FirebaseUid, project.Owner.DisplayName, project.Owner.Email),
-        project.Members.Select(member => new ProjectUserResponse(member.User.FirebaseUid, member.User.DisplayName, member.User.Email)).ToList(),
+        new ProjectUserResponse(project.Owner.Id, project.Owner.FirebaseUid, project.Owner.DisplayName, project.Owner.Email),
+        project.Members.Select(member => new ProjectUserResponse(member.User.Id, member.User.FirebaseUid, member.User.DisplayName, member.User.Email)).ToList(),
         project.CreatedAtUtc,
         project.UpdatedAtUtc);
 }
