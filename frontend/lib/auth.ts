@@ -2,6 +2,8 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
   signOut,
   updateProfile,
 } from "firebase/auth";
@@ -39,6 +41,13 @@ export async function loginWithEmail(email: string, password: string) {
   return credential.user;
 }
 
+export async function loginWithGoogle() {
+  const credential = await signInWithPopup(auth, new GoogleAuthProvider());
+  const idToken = await credential.user.getIdToken();
+  await syncUserWithBackend(idToken, credential.user.displayName ?? credential.user.email ?? "Google User");
+  return credential.user;
+}
+
 export async function logout() {
   await signOut(auth);
 }
@@ -70,6 +79,9 @@ export function getAuthErrorMessage(error: unknown) {
     "auth/weak-password": "Choose a stronger password (at least 6 characters).",
     "auth/user-disabled": "This account has been disabled.",
     "auth/too-many-requests": "Too many attempts. Please try again later.",
+    "auth/popup-closed-by-user": "The Google sign-in window was closed before completing.",
+    "auth/popup-blocked": "Your browser blocked the Google sign-in window. Allow pop-ups and try again.",
+    "auth/cancelled-popup-request": "Another sign-in request is already in progress.",
   };
 
   return messages[code] ?? (error instanceof Error ? error.message : "Something went wrong. Please try again.");

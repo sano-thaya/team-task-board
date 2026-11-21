@@ -44,6 +44,29 @@ public sealed class TaskServiceTests
         Assert.Null(await service.GetAsync(10, task.Id, "member", CancellationToken.None));
     }
 
+    [Fact]
+    public async Task StatusFilteringAndPaginationReturnExpectedPage()
+    {
+        await using var db = Seed(); var service = new TaskService(db);
+        await service.CreateAsync(10, "member", new CreateTaskRequest { Title = "To do one", AssignedUserId = 2, Status = TaskState.ToDo }, CancellationToken.None);
+        await service.CreateAsync(10, "member", new CreateTaskRequest { Title = "To do two", AssignedUserId = 2, Status = TaskState.ToDo }, CancellationToken.None);
+        await service.CreateAsync(10, "member", new CreateTaskRequest { Title = "In progress", AssignedUserId = 2, Status = TaskState.InProgress }, CancellationToken.None);
+
+        var result = await service.GetPageAsync(10, "member", null, null, TaskState.ToDo, 2, 1, CancellationToken.None);
+
+        Assert.NotNull(result); Assert.Equal(2, result!.TotalCount); Assert.Equal(2, result.TotalPages); Assert.Single(result.Items); Assert.Equal(TaskState.ToDo, result.Items[0].Status);
+        await Assert.ThrowsAsync<TaskPageValidationException>(() => service.GetPageAsync(10, "member", null, null, null, 0, 1, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task CompatibilityLookupDoesNotExposeAnotherUsersTask()
+    {
+        await using var db = Seed(); var service = new TaskService(db);
+        var task = await service.CreateAsync(10, "member", new CreateTaskRequest { Title = "Protected", AssignedUserId = 2 }, CancellationToken.None);
+        Assert.NotNull(await service.GetByIdAsync(task.Id, "member", CancellationToken.None));
+        Assert.Null(await service.GetByIdAsync(task.Id, "other", CancellationToken.None));
+    }
+
     private static AppDbContext Seed()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;

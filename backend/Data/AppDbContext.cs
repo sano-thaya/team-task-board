@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<ProjectMember> ProjectMembers => Set<ProjectMember>();
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
+    public DbSet<OverdueTaskReportRow> OverdueTaskReportRows => Set<OverdueTaskReportRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -106,6 +107,8 @@ public class AppDbContext : DbContext
                 .HasForeignKey(task => task.AssignedUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<OverdueTaskReportRow>().HasNoKey();
     }
 }
 
