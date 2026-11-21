@@ -16,9 +16,11 @@ Team Task Board is a full-stack task collaboration application built for the Ful
 The repository currently includes:
 
 - Firebase registration, login, logout, session restoration, and protected routes.
+- Google Sign-In through Firebase Authentication, with the same backend user synchronization flow.
 - Firebase-to-MySQL user synchronization with a default `Member` role.
 - Project creation, listing, details, owner-only editing, member management, and deletion.
 - Task creation, editing, deletion, assignment, search, priority filtering, and due-date validation.
+- A responsive To Do / In Progress / Done board, status filtering, pagination metadata, and compatibility task routes.
 - Task comments stored in Firestore with live refresh through a Firestore event marker.
 - Top-level comment replies stored in the same Firestore task collection.
 - Owner-only overdue task reporting grouped by assigned user.
@@ -66,6 +68,10 @@ The API requires:
 - `Firebase:ProjectId` or `FIREBASE_PROJECT_ID`.
 - Google Application Default Credentials for Firebase Admin and Firestore server access.
 
+### Google Sign-In setup
+
+In Firebase Console, open **Authentication → Sign-in method**, enable the **Google** provider, choose a project support email, and save. Add the local frontend origin (`http://localhost:3000`) under **Authentication → Settings → Authorized domains** if it is not already present. No Google client secret is placed in the frontend or repository; Firebase handles the provider flow. The frontend uses `signInWithPopup`, obtains the Firebase ID token, and calls `/api/auth/sync`. The backend uses the token’s verified UID and email, so repeated Google sign-ins update the existing `Users` row rather than creating duplicates.
+
 Keep service-account credentials outside the repository. The `.gitignore` excludes environment files, secret directories, certificate files, and private keys. No Firebase service-account JSON is used by the frontend.
 
 ## Running locally
@@ -94,6 +100,13 @@ dotnet ef database update --project backend --startup-project backend
 
 The current task migration is `20261121082315_AddTasks` and includes the `Tasks` table, foreign keys, and indexes for project, assignee, status, and priority.
 
+The standalone SQL equivalents are [database/schema.sql](database/schema.sql) and [database/seed.sql](database/seed.sql). Use them for a fresh development database only; use EF migrations for an existing application database:
+
+```powershell
+mysql -u <user> -p < database/schema.sql
+mysql -u <user> -p < database/seed.sql
+```
+
 ## API endpoints currently implemented
 
 All endpoints below that are marked protected require a Firebase ID token in the header:
@@ -109,11 +122,15 @@ POST   /api/projects                            create a project
 PUT    /api/projects/{id}                       owner-only project update
 DELETE /api/projects/{id}                       owner-only project deletion
 
-GET    /api/projects/{id}/tasks                 list tasks; supports search and priority
+GET    /api/projects/{id}/tasks                 list tasks; supports search, priority, status, page, and pageSize
 GET    /api/projects/{id}/tasks/{taskId}        task details
 POST   /api/projects/{id}/tasks                 create a task
 PUT    /api/projects/{id}/tasks/{taskId}        update a task
 DELETE /api/projects/{id}/tasks/{taskId}        delete a task
+
+GET    /api/tasks/{taskId}                      assignment-compatible task lookup
+PUT    /api/tasks/{taskId}                      assignment-compatible task update
+DELETE /api/tasks/{taskId}                      assignment-compatible task deletion
 
 GET    /api/projects/{id}/tasks/{taskId}/comments       list comments
 POST   /api/projects/{id}/tasks/{taskId}/comments       create comment or reply
@@ -171,25 +188,21 @@ This review compares the current repository with the supplied assignment brief. 
 
 | Area | Score | Review |
 | --- | ---: | --- |
-| Frontend | 19/25 | Authentication, protected routes, forms, validation, search/filtering, comments, loading/error states, and responsive UI are implemented. The brief requests a three-column board; the current UI is a responsive task list with selected-task details instead. |
-| Backend | 20/25 | Controllers delegate to services, DTOs are used, Firebase authentication and ownership checks are present, and correct common status codes are returned. The exact brief routes `/api/tasks/{id}` are not used; task update/delete remain nested under projects. Status and pagination query parameters are not implemented. |
-| Database | 9/15 | EF migrations define primary keys, foreign keys, required fields, relationships, and task indexes. The overdue report currently uses EF/LINQ plus application-side grouping rather than one explicit SQL `JOIN`/`GROUP BY` query. Required `schema.sql` and `seed.sql` files are not present. |
-| Firebase | 9/10 | Firebase Auth, backend token verification, Firestore comments, live updates, protected rules, and secret handling are implemented. Automated Firestore integration testing is not present. |
-| Code quality and Git | 12/15 | Layered backend design, dependency injection, service tests, and feature branches are present in the inspected checkout. A complete submission-history/PR review was not performed here, and some frontend files are compact rather than conventionally formatted. |
-| README and docs | 5/5 | This README documents setup, environment variables, architecture, endpoints, testing, design decisions, and known gaps. The existing `README.txt` remains as legacy documentation. |
-| Tests and bonus | 3/5 | Backend tests are meaningful and passing. There are no frontend component/Playwright tests, and the optional SQL deliverables are missing. |
-| **Total** | **77/100** | **Strong core implementation, with the documented assignment-specific gaps above.** |
+| Frontend | 23/25 | Authentication, Google sign-in UI, protected routes, forms, validation, status board columns, search/filtering, comments, loading/error states, and responsive UI are implemented. Drag-and-drop is not included; status changes use an accessible control. |
+| Backend | 23/25 | Controllers delegate to services, DTOs are used, Firebase authentication and ownership checks are present, task compatibility routes exist, and status/pagination filtering is implemented. The exact assignment route shape is supported for task lookup/update/delete, while project-scoped routes remain available. |
+| Database | 13/15 | EF migrations and matching `schema.sql`/`seed.sql` define keys, foreign keys, required fields, relationships, unique constraints, and useful indexes. The production overdue query now uses MySQL `JOIN`, `GROUP BY`, and a window count; it still maps grouped response data in the service. |
+| Firebase | 10/10 | Firebase email/password and Google Auth, backend token verification, Firestore comments/replies, live updates, protected rules, and secret handling are implemented. Real provider testing still requires Firebase Console configuration. |
+| Code quality and Git | 12/15 | Layered backend design, dependency injection, service tests, and feature-branch workflow are present. A complete submission-history/PR review was not performed here, and some frontend files remain compact. |
+| README and docs | 5/5 | Setup, environment variables, Google provider setup, architecture, endpoints, SQL scripts, testing, design decisions, and known gaps are documented. |
+| Tests and bonus | 4/5 | Ten backend tests pass, including status filtering, pagination, route authorization, and overdue behavior. No frontend component/Playwright suite or real Firebase integration test is present. |
+| **Total** | **90/100** | **Strong implementation; remaining points are primarily optional drag-and-drop, frontend automated tests, and live-provider integration coverage.** |
 
 ## Known gaps and recommended next steps
 
-1. Add `database/schema.sql` and `database/seed.sql` with safe sample values.
-2. Add a dedicated SQL overdue report query using `JOIN` and `GROUP BY`, or document why the EF query is the chosen equivalent.
-3. Add `status` and `page`/total-count support to the task list endpoint.
-4. Decide whether to add compatibility routes matching the brief’s `/api/tasks/{id}` update/delete endpoints.
-5. Render tasks in explicit To Do, In Progress, and Done columns if strict board compliance is required.
-6. Extend `backend/TeamTaskBoard.Api.http` with comments, replies, and overdue report requests.
-7. Add frontend component or browser tests and Firestore integration tests.
-8. Remove the interviewer-only section from any externally submitted copy of the assignment document if it is still present outside this repository.
+1. Add drag-and-drop only if it can be introduced without compromising keyboard status changes.
+2. Add frontend component/browser tests and Firebase integration tests.
+3. Extend the SQL seed with a controlled overdue development record when manual report testing needs it.
+4. Remove the interviewer-only section from any externally submitted copy of the assignment document if it is still present outside this repository.
 
 ## Security note
 

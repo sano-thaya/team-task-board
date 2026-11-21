@@ -9,10 +9,14 @@ namespace TeamTaskBoard.Api.Services;
 public interface ITaskService
 {
     Task<IReadOnlyList<TaskResponse>?> GetAllAsync(long projectId, string uid, string? search, TaskPriority? priority, CancellationToken cancellationToken);
+    Task<TaskListResponse?> GetPageAsync(long projectId, string uid, string? search, TaskPriority? priority, TaskState? status, int page, int pageSize, CancellationToken cancellationToken);
     Task<TaskResponse?> GetAsync(long projectId, long taskId, string uid, CancellationToken cancellationToken);
+    Task<TaskResponse?> GetByIdAsync(long taskId, string uid, CancellationToken cancellationToken);
     Task<TaskResponse> CreateAsync(long projectId, string uid, CreateTaskRequest request, CancellationToken cancellationToken);
     Task<TaskResponse?> UpdateAsync(long projectId, long taskId, string uid, UpdateTaskRequest request, CancellationToken cancellationToken);
     Task<bool> DeleteAsync(long projectId, long taskId, string uid, CancellationToken cancellationToken);
+    Task<TaskResponse?> UpdateByIdAsync(long taskId, string uid, UpdateTaskRequest request, CancellationToken cancellationToken);
+    Task<bool> DeleteByIdAsync(long taskId, string uid, CancellationToken cancellationToken);
 }
 
 public sealed class TaskService : ITaskService
@@ -29,11 +33,30 @@ public sealed class TaskService : ITaskService
         return (await query.OrderByDescending(t => t.UpdatedAtUtc).ToListAsync(ct)).Select(Map).ToList();
     }
 
+    public async Task<TaskListResponse?> GetPageAsync(long projectId, string uid, string? search, TaskPriority? priority, TaskState? status, int page, int pageSize, CancellationToken ct)
+    {
+        if (page < 1 || pageSize is < 1 or > 100) throw new TaskPageValidationException("Page must be at least 1 and pageSize must be between 1 and 100.");
+        if (!await HasAccess(projectId, uid, ct)) return null;
+        var query = BaseQuery().Where(t => t.ProjectId == projectId);
+        if (!string.IsNullOrWhiteSpace(search)) query = query.Where(t => EF.Functions.Like(t.Title, $"%{search.Trim()}%"));
+        if (priority.HasValue) query = query.Where(t => t.Priority == priority.Value);
+        if (status.HasValue) query = query.Where(t => t.Status == status.Value);
+        var totalCount = await query.CountAsync(ct);
+        var items = (await query.OrderByDescending(t => t.UpdatedAtUtc).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct)).Select(Map).ToList();
+        return new TaskListResponse(items, page, pageSize, totalCount, (int)Math.Ceiling(totalCount / (double)pageSize));
+    }
+
     public async Task<TaskResponse?> GetAsync(long projectId, long taskId, string uid, CancellationToken ct)
     {
         if (!await HasAccess(projectId, uid, ct)) return null;
         var task = await BaseQuery().SingleOrDefaultAsync(t => t.ProjectId == projectId && t.Id == taskId, ct);
         return task is null ? null : Map(task);
+    }
+
+    public async Task<TaskResponse?> GetByIdAsync(long taskId, string uid, CancellationToken ct)
+    {
+        var projectId = await _db.Tasks.Where(task => task.Id == taskId).Select(task => (long?)task.ProjectId).SingleOrDefaultAsync(ct);
+        return projectId.HasValue ? await GetAsync(projectId.Value, taskId, uid, ct) : null;
     }
 
     public async Task<TaskResponse> CreateAsync(long projectId, string uid, CreateTaskRequest request, CancellationToken ct)
@@ -66,6 +89,18 @@ public sealed class TaskService : ITaskService
         _db.Tasks.Remove(task); await _db.SaveChangesAsync(ct); return true;
     }
 
+    public async Task<TaskResponse?> UpdateByIdAsync(long taskId, string uid, UpdateTaskRequest request, CancellationToken ct)
+    {
+        var projectId = await _db.Tasks.Where(task => task.Id == taskId).Select(task => (long?)task.ProjectId).SingleOrDefaultAsync(ct);
+        return projectId.HasValue ? await UpdateAsync(projectId.Value, taskId, uid, request, ct) : null;
+    }
+
+    public async Task<bool> DeleteByIdAsync(long taskId, string uid, CancellationToken ct)
+    {
+        var projectId = await _db.Tasks.Where(task => task.Id == taskId).Select(task => (long?)task.ProjectId).SingleOrDefaultAsync(ct);
+        return projectId.HasValue && await DeleteAsync(projectId.Value, taskId, uid, ct);
+    }
+
     private IQueryable<TaskItem> BaseQuery() => _db.Tasks.AsNoTracking().Include(t => t.AssignedUser);
     private Task<bool> HasAccess(long projectId, string uid, CancellationToken ct) => _db.Projects.AnyAsync(p => p.Id == projectId && (p.Owner.FirebaseUid == uid || p.Members.Any(m => m.User.FirebaseUid == uid)), ct);
     private Task<bool> IsParticipant(long projectId, long userId, CancellationToken ct) => _db.Projects.AnyAsync(p => p.Id == projectId && (p.OwnerId == userId || p.Members.Any(m => m.UserId == userId)), ct);
@@ -82,3 +117,4 @@ public sealed class TaskService : ITaskService
 
 public sealed class TaskValidationException(string message) : Exception(message);
 public sealed class TaskNotFoundException : Exception;
+public sealed class TaskPageValidationException(string message) : Exception(message);

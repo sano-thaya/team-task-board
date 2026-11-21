@@ -64,7 +64,7 @@ DELETE {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}
 Authorization: Bearer {{firebaseIdToken}}
 
 ### List tasks, optionally using search and priority filtering
-GET {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}/tasks?search=login&priority=High
+GET {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}/tasks?search=login&priority=High&status=InProgress&page=1&pageSize=25
 Authorization: Bearer {{firebaseIdToken}}
 
 ### Create a task; assignedUserId must be the owner or a project member
@@ -102,4 +102,53 @@ Content-Type: application/json
 
 ###
 DELETE {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}/tasks/{{taskId}}
+Authorization: Bearer {{firebaseIdToken}}
+
+### Assignment-compatible task routes
+GET {{TeamTaskBoard.Api_HostAddress}}/api/tasks/{{taskId}}
+Authorization: Bearer {{firebaseIdToken}}
+
+###
+PUT {{TeamTaskBoard.Api_HostAddress}}/api/tasks/{{taskId}}
+Authorization: Bearer {{firebaseIdToken}}
+Content-Type: application/json
+
+{
+  "title": "Updated task",
+  "description": "Updated through the compatibility route.",
+  "assignedUserId": 1,
+  "priority": "Medium",
+  "status": "InProgress",
+  "dueDateUtc": "2026-12-01T23:59:59Z"
+}
+
+###
+DELETE {{TeamTaskBoard.Api_HostAddress}}/api/tasks/{{taskId}}
+Authorization: Bearer {{firebaseIdToken}}
+
+### List comments for a task
+GET {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}/tasks/{{taskId}}/comments
+Authorization: Bearer {{firebaseIdToken}}
+
+### Create a top-level comment
+POST {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}/tasks/{{taskId}}/comments
+Authorization: Bearer {{firebaseIdToken}}
+Content-Type: application/json
+
+{
+  "text": "Please review this task."
+}
+
+### Reply to a comment by its Firestore document ID
+POST {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}/tasks/{{taskId}}/comments
+Authorization: Bearer {{firebaseIdToken}}
+Content-Type: application/json
+
+{
+  "text": "I will review it today.",
+  "parentCommentId": "replace-with-comment-document-id"
+}
+
+### Owner-only overdue report
+GET {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}/reports/overdue-tasks
 Authorization: Bearer {{firebaseIdToken}}

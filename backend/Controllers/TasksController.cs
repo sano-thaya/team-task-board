@@ -11,10 +11,10 @@ namespace TeamTaskBoard.Api.Controllers;
 public class TasksController(ITaskService service) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<TaskResponse>>> GetAll(long projectId, [FromQuery] string? search, [FromQuery] TaskPriority? priority, CancellationToken ct)
+    public async Task<ActionResult<TaskListResponse>> GetAll(long projectId, [FromQuery] string? search, [FromQuery] TaskPriority? priority, [FromQuery] TaskState? status, [FromQuery] int page = 1, [FromQuery] int pageSize = 25, CancellationToken ct = default)
     {
-        var result = await service.GetAllAsync(projectId, CurrentUid(), search, priority, ct);
-        return result is null ? NotFound() : Ok(result);
+        try { var result = await service.GetPageAsync(projectId, CurrentUid(), search, priority, status, page, pageSize, ct); return result is null ? NotFound() : Ok(result); }
+        catch (TaskPageValidationException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
     [HttpGet("{taskId:long}")]
@@ -64,3 +64,4 @@ public sealed class UpdateTaskRequest
     public DateTime? DueDateUtc { get; init; }
 }
 public record TaskResponse(long Id, long ProjectId, string Title, string Description, ProjectUserResponse AssignedUser, TaskPriority Priority, TaskState Status, DateTime? DueDateUtc, DateTime CreatedAtUtc, DateTime UpdatedAtUtc);
+public record TaskListResponse(IReadOnlyList<TaskResponse> Items, int Page, int PageSize, int TotalCount, int TotalPages);
