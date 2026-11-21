@@ -4,3 +4,26 @@ GET {{TeamTaskBoard.Api_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+# Set this to a Firebase ID token for the authenticated requests below.
+@firebaseIdToken = replace-with-firebase-id-token
+
+### Verify a missing token (expected 401)
+GET {{TeamTaskBoard.Api_HostAddress}}/api/auth/verify
+
+### Verify a Firebase ID token (expected 200 for a valid token)
+GET {{TeamTaskBoard.Api_HostAddress}}/api/auth/verify
+Authorization: Bearer {{firebaseIdToken}}
+
+### Synchronize a profile (expected 200; repeat safely to verify idempotency)
+POST {{TeamTaskBoard.Api_HostAddress}}/api/auth/sync
+Authorization: Bearer {{firebaseIdToken}}
+Content-Type: application/json
+
+{
+  "displayName": "Example User"
+}
+
+### Get the authenticated profile (expected 200)
+GET {{TeamTaskBoard.Api_HostAddress}}/api/auth/me
+Authorization: Bearer {{firebaseIdToken}}
