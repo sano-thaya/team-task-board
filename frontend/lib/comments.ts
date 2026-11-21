@@ -1,7 +1,7 @@
 import { doc, onSnapshot, type Unsubscribe } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
-export type TaskComment = { id: string; authorName: string; text: string; createdAtUtc: string };
+export type TaskComment = { id: string; authorName: string; text: string; createdAtUtc: string; parentCommentId: string | null };
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5159";
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -20,7 +20,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export const getComments = (projectId: number, taskId: number) => request<TaskComment[]>(`/api/projects/${projectId}/tasks/${taskId}/comments`);
-export const createComment = (projectId: number, taskId: number, text: string) => request<TaskComment>(`/api/projects/${projectId}/tasks/${taskId}/comments`, { method: "POST", body: JSON.stringify({ text }) });
+export const createComment = (projectId: number, taskId: number, text: string, parentCommentId?: string) => request<TaskComment>(`/api/projects/${projectId}/tasks/${taskId}/comments`, { method: "POST", body: JSON.stringify({ text, ...(parentCommentId ? { parentCommentId } : {}) }) });
 
 export function subscribeToCommentUpdates(projectId: number, taskId: number, onChanged: () => void, onError: (error: Error) => void): Unsubscribe {
   return onSnapshot(doc(db, "commentEvents", `${projectId}_${taskId}`), () => onChanged(), error => onError(error));

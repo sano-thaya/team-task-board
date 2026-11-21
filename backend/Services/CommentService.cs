@@ -39,6 +39,14 @@ public sealed class CommentService : ICommentService
         if (author is null) return null;
 
         var createdAtUtc = DateTime.UtcNow;
+        DocumentSnapshot? parent = null;
+        if (!string.IsNullOrWhiteSpace(request.ParentCommentId))
+        {
+            parent = await CommentsCollection(projectId, taskId).Document(request.ParentCommentId).GetSnapshotAsync(cancellationToken);
+            if (!parent.Exists) throw new CommentValidationException("The comment being replied to was not found.");
+            if (parent.ContainsField("parentCommentId")) throw new CommentValidationException("Replies can only be added to top-level comments.");
+        }
+
         var data = new Dictionary<string, object>
         {
             ["projectId"] = projectId,
@@ -48,11 +56,12 @@ public sealed class CommentService : ICommentService
             ["text"] = request.Text.Trim(),
             ["createdAtUtc"] = Timestamp.FromDateTime(createdAtUtc)
         };
+        if (parent is not null) data["parentCommentId"] = parent.Id;
         var comment = await CommentsCollection(projectId, taskId).AddAsync(data, cancellationToken);
         await _firestore.Collection("commentEvents").Document(EventId(projectId, taskId)).SetAsync(
             new Dictionary<string, object> { ["lastCommentAtUtc"] = Timestamp.FromDateTime(createdAtUtc) },
             cancellationToken: cancellationToken);
-        return new CommentResponse(comment.Id, author.DisplayName, request.Text.Trim(), createdAtUtc);
+        return new CommentResponse(comment.Id, author.DisplayName, request.Text.Trim(), createdAtUtc, parent?.Id);
     }
 
     private CollectionReference CommentsCollection(long projectId, long taskId) => _firestore
@@ -67,7 +76,8 @@ public sealed class CommentService : ICommentService
     private static CommentResponse Map(DocumentSnapshot document)
     {
         var timestamp = document.GetValue<Timestamp>("createdAtUtc").ToDateTime();
-        return new CommentResponse(document.Id, document.GetValue<string>("authorName"), document.GetValue<string>("text"), timestamp);
+        var parentCommentId = document.ContainsField("parentCommentId") ? document.GetValue<string>("parentCommentId") : null;
+        return new CommentResponse(document.Id, document.GetValue<string>("authorName"), document.GetValue<string>("text"), timestamp, parentCommentId);
     }
 }
 
