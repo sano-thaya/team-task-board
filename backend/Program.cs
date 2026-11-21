@@ -64,6 +64,7 @@ builder.Services.AddSingleton(FirebaseAuth.GetAuth(firebaseApp));
 // Register our token verification service.
 builder.Services.AddScoped<FirebaseTokenService>();
 builder.Services.AddScoped<IUserSyncService, UserSyncService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
 
 var app = builder.Build();
 
