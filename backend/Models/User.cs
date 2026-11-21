@@ -14,4 +14,8 @@ public class User
     public string Role { get; set; } = "Member";
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+
+    public ICollection<Project> OwnedProjects { get; set; } = new List<Project>();
+
+    public ICollection<ProjectMember> ProjectMemberships { get; set; } = new List<ProjectMember>();
 }

@@ -27,3 +27,38 @@ Content-Type: application/json
 ### Get the authenticated profile (expected 200)
 GET {{TeamTaskBoard.Api_HostAddress}}/api/auth/me
 Authorization: Bearer {{firebaseIdToken}}
+
+### List projects available to the authenticated user
+GET {{TeamTaskBoard.Api_HostAddress}}/api/projects
+Authorization: Bearer {{firebaseIdToken}}
+
+### Create a project; member emails must belong to synchronized users
+POST {{TeamTaskBoard.Api_HostAddress}}/api/projects
+Authorization: Bearer {{firebaseIdToken}}
+Content-Type: application/json
+
+{
+  "name": "Website redesign",
+  "description": "Plan the next website release.",
+  "memberEmails": []
+}
+
+### Get, update, or delete a project by ID
+@projectId = 1
+GET {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}
+Authorization: Bearer {{firebaseIdToken}}
+
+###
+PUT {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}
+Authorization: Bearer {{firebaseIdToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated website redesign",
+  "description": "Updated project scope.",
+  "memberEmails": []
+}
+
+###
+DELETE {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}
+Authorization: Bearer {{firebaseIdToken}}
