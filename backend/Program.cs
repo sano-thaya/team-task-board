@@ -3,17 +3,58 @@ using FirebaseAdmin;
 using FirebaseAdmin.Auth;
 using Google.Apis.Auth.OAuth2;
 using TeamTaskBoard.Api.Services;
+using Microsoft.EntityFrameworkCore;
+using TeamTaskBoard.Api.Data;
+using Microsoft.AspNetCore.Authentication;
+
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure MySQL database connection.
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException(
+        "Database connection string is missing."
+    );
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 4, 13))));
 
 // Register MVC controllers and OpenAPI.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddProblemDetails();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = "Firebase";
+    options.DefaultChallengeScheme = "Firebase";
+})
+.AddScheme<FirebaseAuthenticationOptions, FirebaseAuthenticationHandler>("Firebase", _ => { });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("ManagerOnly", policy => policy.RequireRole("Manager"));
+});
 
 // Initialize Firebase Admin using the service account credentials.
+var firebaseProjectId = builder.Configuration["Firebase:ProjectId"]
+    ?? builder.Configuration["FIREBASE_PROJECT_ID"];
+
 var firebaseApp = FirebaseApp.Create(new AppOptions
 {
-    Credential = GoogleCredential.GetApplicationDefault()
+    Credential = GoogleCredential.GetApplicationDefault(),
+    ProjectId = firebaseProjectId
 });
 
 // Make Firebase services available through dependency injection.
@@ -22,6 +63,7 @@ builder.Services.AddSingleton(FirebaseAuth.GetAuth(firebaseApp));
 
 // Register our token verification service.
 builder.Services.AddScoped<FirebaseTokenService>();
+builder.Services.AddScoped<IUserSyncService, UserSyncService>();
 
 var app = builder.Build();
 
@@ -31,8 +73,11 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseExceptionHandler();
 app.UseHttpsRedirection();
 
+app.UseCors("FrontendPolicy");
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
