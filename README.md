@@ -182,20 +182,7 @@ The current automated backend suite contains 8 passing service tests covering pr
 
 For live comments and replies, use two authenticated browser sessions, open the same task, post a comment or reply in one session, and confirm the other session updates without a page refresh. Firebase credentials, a running API, MySQL, and Firestore access are required for this manual test.
 
-## Assignment compliance review
 
-This review compares the current repository with the supplied assignment brief. It describes the actual implementation as inspected; it is not a claim that every optional deliverable is complete.
-
-| Area | Score | Review |
-| --- | ---: | --- |
-| Frontend | 23/25 | Authentication, Google sign-in UI, protected routes, forms, validation, status board columns, search/filtering, comments, loading/error states, and responsive UI are implemented. Drag-and-drop is not included; status changes use an accessible control. |
-| Backend | 23/25 | Controllers delegate to services, DTOs are used, Firebase authentication and ownership checks are present, task compatibility routes exist, and status/pagination filtering is implemented. The exact assignment route shape is supported for task lookup/update/delete, while project-scoped routes remain available. |
-| Database | 13/15 | EF migrations and matching `schema.sql`/`seed.sql` define keys, foreign keys, required fields, relationships, unique constraints, and useful indexes. The production overdue query now uses MySQL `JOIN`, `GROUP BY`, and a window count; it still maps grouped response data in the service. |
-| Firebase | 10/10 | Firebase email/password and Google Auth, backend token verification, Firestore comments/replies, live updates, protected rules, and secret handling are implemented. Real provider testing still requires Firebase Console configuration. |
-| Code quality and Git | 12/15 | Layered backend design, dependency injection, service tests, and feature-branch workflow are present. A complete submission-history/PR review was not performed here, and some frontend files remain compact. |
-| README and docs | 5/5 | Setup, environment variables, Google provider setup, architecture, endpoints, SQL scripts, testing, design decisions, and known gaps are documented. |
-| Tests and bonus | 4/5 | Ten backend tests pass, including status filtering, pagination, route authorization, and overdue behavior. No frontend component/Playwright suite or real Firebase integration test is present. |
-| **Total** | **90/100** | **Strong implementation; remaining points are primarily optional drag-and-drop, frontend automated tests, and live-provider integration coverage.** |
 
 ## Known gaps and recommended next steps
 
