@@ -33,6 +33,7 @@ public sealed class CommentsController(ICommentService commentService) : Control
 public sealed class CreateCommentRequest
 {
     [Required, MaxLength(2000)] public string Text { get; init; } = string.Empty;
+    public string? ParentCommentId { get; init; }
 }
 
-public sealed record CommentResponse(string Id, string AuthorName, string Text, DateTime CreatedAtUtc);
+public sealed record CommentResponse(string Id, string AuthorName, string Text, DateTime CreatedAtUtc, string? ParentCommentId);

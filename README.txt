@@ -62,7 +62,9 @@ The Firestore rules are in `firestore.rules`. Comment documents are not directly
 Comment API endpoints:
 
 * `GET /api/projects/{projectId}/tasks/{taskId}/comments` lists comments chronologically.
-* `POST /api/projects/{projectId}/tasks/{taskId}/comments` creates a comment with `{ "text": "..." }`.
+* `POST /api/projects/{projectId}/tasks/{taskId}/comments` creates a comment with `{ "text": "..." }`, or a reply with `{ "text": "...", "parentCommentId": "comment-document-id" }`.
+
+Replies are stored in the same task comment collection with `parentCommentId`. The API derives the reply author from the verified Firebase identity, verifies the parent comment belongs to the same task, and rejects nested replies. The frontend groups replies beneath their parent and refreshes both comments and replies through the existing Firestore real-time event marker.
 
 The backend uses Application Default Credentials for the Firestore Admin client, the same credential approach already used by Firebase Admin token verification. `Firebase:ProjectId` or `FIREBASE_PROJECT_ID` must be configured; no service-account JSON is exposed to the frontend.
 

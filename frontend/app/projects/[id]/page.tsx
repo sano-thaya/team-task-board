@@ -9,79 +9,22 @@ import { OverdueTaskReport } from "../../../components/OverdueTaskReport";
 import { ProjectTasks } from "../../../components/ProjectTasks";
 import { deleteProject, getProject, updateProject, type Project } from "../../../lib/projects";
 
+const controlClass = "mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-200";
+
+function EditIcon() { return <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path d="m13.586 3.586 2.828 2.828a2 2 0 0 1 0 2.828l-7.5 7.5a2 2 0 0 1-1.414.586H5a1 1 0 0 1-1-1v-2.5a2 2 0 0 1 .586-1.414l7.5-7.5a2 2 0 0 1 2.828 0ZM12.793 5.207 5.586 12.414A1 1 0 0 0 5.293 13v1.828h1.828a1 1 0 0 0 .707-.293l7.207-7.207-2.242-2.121Z" /></svg>; }
+function RoleBadge({ owner }: { owner: boolean }) { return <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${owner ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-600"}`}><span aria-hidden="true">{owner ? "◆" : "●"}</span>{owner ? "Project Owner" : "Member"}</span>; }
+
 function ProjectDetailsContent() {
-  const { id } = useParams<{ id: string }>();
-  const router = useRouter();
-  const { user } = useAuth();
-  const [project, setProject] = useState<Project | null>(null);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [members, setMembers] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
-  useEffect(() => {
-    void getProject(id)
-      .then(item => {
-        setProject(item);
-        setName(item.name);
-        setDescription(item.description);
-        setMembers(item.members.map(member => member.email).join(", "));
-      })
-      .catch(reason => setError(reason instanceof Error ? reason.message : "Could not load the project."))
-      .finally(() => setLoading(false));
-  }, [id]);
-
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    setError("");
-    setSuccess("");
-    setSaving(true);
-    try {
-      const item = await updateProject(id, name.trim(), description.trim(), members.split(",").map(value => value.trim()).filter(Boolean));
-      setProject(item);
-      setSuccess("Project updated successfully.");
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Could not update the project.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function remove() {
-    if (!window.confirm("Delete this project? This cannot be undone.")) return;
-    setError("");
-    try {
-      await deleteProject(id);
-      router.replace("/projects");
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Could not delete the project.");
-    }
-  }
-
-  if (loading) return <p className="p-10 text-slate-500">Loading project…</p>;
-
-  return <main className="min-h-screen bg-slate-100">
-    <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-        <Link href="/projects" className="font-bold tracking-wide text-slate-900">← Projects</Link>
-        <div className="flex gap-4"><Link href={`/projects/${id}/tasks`} className="text-sm font-semibold text-blue-600">Tasks</Link><Link href="/dashboard" className="text-sm font-semibold text-blue-600">Dashboard</Link></div>
-      </div>
-    </header>
-    <div className="mx-auto max-w-4xl px-6 py-10">
-      {error && <p role="alert" className="mb-5 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
-      {!project ? <div className="rounded-xl bg-white p-10 text-center text-slate-500">Project not found or unavailable.</div> : <>
-        <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
-          <section className="rounded-xl bg-white p-7 shadow-sm"><p className="text-sm font-semibold uppercase tracking-wider text-blue-600">Project details</p><h1 className="mt-2 text-3xl font-bold text-slate-900">{project.name}</h1><p className="mt-4 whitespace-pre-wrap text-slate-600">{project.description || "No description provided."}</p><div className="mt-8 border-t border-slate-200 pt-5"><h2 className="font-semibold text-slate-900">People</h2><p className="mt-3 text-sm text-slate-600">Owner: {project.owner.displayName} ({project.owner.email})</p>{project.members.length > 0 && <ul className="mt-2 space-y-1 text-sm text-slate-600">{project.members.map(member => <li key={member.firebaseUid}>{member.displayName} ({member.email})</li>)}</ul>}</div></section>
-          <form onSubmit={submit} className="rounded-xl bg-white p-6 shadow-sm"><h2 className="text-xl font-bold text-slate-900">Edit project</h2><label className="mt-5 block text-sm font-medium text-slate-700">Name<input required maxLength={150} value={name} onChange={event => setName(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" /></label><label className="mt-4 block text-sm font-medium text-slate-700">Description<textarea maxLength={2000} value={description} onChange={event => setDescription(event.target.value)} rows={5} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" /></label><label className="mt-4 block text-sm font-medium text-slate-700">Member emails<input value={members} onChange={event => setMembers(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500" /></label>{success && <p role="status" className="mt-4 text-sm text-green-700">{success}</p>}<button disabled={saving} className="mt-6 w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-60">{saving ? "Saving…" : "Save changes"}</button><button type="button" onClick={remove} className="mt-3 w-full rounded-lg border border-red-200 px-4 py-3 font-semibold text-red-600 hover:bg-red-50">Delete project</button></form>
-        </div>
-        <ProjectTasks project={project} />
-        {user?.uid === project.owner.firebaseUid && <OverdueTaskReport projectId={project.id} />}
-      </>}
-    </div>
-  </main>;
+  const { id } = useParams<{ id: string }>(); const router = useRouter(); const { user } = useAuth();
+  const [project, setProject] = useState<Project | null>(null); const [name, setName] = useState(""); const [description, setDescription] = useState(""); const [members, setMembers] = useState(""); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [editOpen, setEditOpen] = useState(false); const [error, setError] = useState(""); const [success, setSuccess] = useState("");
+  useEffect(() => { void getProject(id).then(item => { setProject(item); setName(item.name); setDescription(item.description); setMembers(item.members.map(member => member.email).join(", ")); }).catch(reason => setError(reason instanceof Error ? reason.message : "Could not load the project.")).finally(() => setLoading(false)); }, [id]);
+  useEffect(() => { if (!editOpen) return; const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape" && !saving) setEditOpen(false); }; document.addEventListener("keydown", closeOnEscape); return () => document.removeEventListener("keydown", closeOnEscape); }, [editOpen, saving]);
+  function openEditor() { if (!project) return; setName(project.name); setDescription(project.description); setMembers(project.members.map(member => member.email).join(", ")); setError(""); setEditOpen(true); }
+  async function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setError(""); if (!name.trim()) { setError("Project name is required."); return; } setSaving(true); try { const item = await updateProject(id, name.trim(), description.trim(), members.split(",").map(value => value.trim()).filter(Boolean)); setProject(item); setEditOpen(false); setSuccess("Project updated successfully."); } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not update the project."); } finally { setSaving(false); } }
+  async function remove() { if (!project || !window.confirm(`Delete “${project.name}”? This cannot be undone.`)) return; setError(""); try { await deleteProject(id); router.replace("/projects"); } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not delete the project."); } }
+  if (loading) return <main className="flex min-h-screen items-center justify-center bg-slate-100 text-slate-600" aria-live="polite">Loading project…</main>;
+  const isOwner = user?.uid === project?.owner.firebaseUid;
+  return <main className="min-h-screen bg-slate-100"><header className="border-b border-slate-200 bg-white"><div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6"><Link href="/projects" className="rounded-md px-2 py-1 font-bold text-slate-900 hover:bg-slate-100">← <span className="sr-only">Back to </span>Projects</Link><nav aria-label="Project navigation" className="flex gap-4"><Link href={`/projects/${id}/tasks`} className="text-sm font-semibold text-blue-700 hover:underline">Tasks</Link><Link href="/dashboard" className="text-sm font-semibold text-blue-700 hover:underline">Dashboard</Link></nav></div></header><div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-10">{error && !editOpen && <p role="alert" className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}{success && <p role="status" className="mb-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</p>}{!project ? <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-slate-600">Project not found or unavailable.</div> : <><section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Project details</p><h1 className="mt-2 break-words text-3xl font-bold text-slate-900">{project.name}</h1></div>{isOwner && <button type="button" onClick={openEditor} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-400 hover:bg-blue-50 hover:text-blue-800"><EditIcon /> Edit project</button>}</div><p className="mt-4 whitespace-pre-wrap text-slate-600">{project.description || "No description provided."}</p><div className="mt-8 border-t border-slate-200 pt-5"><h2 className="font-semibold text-slate-900">People</h2><div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-600"><span>Owner: {project.owner.displayName} ({project.owner.email})</span><RoleBadge owner /></div>{project.members.length > 0 ? <ul className="mt-3 space-y-2 text-sm text-slate-600">{project.members.map(member => <li key={member.firebaseUid} className="flex flex-wrap items-center gap-2 break-words"><span>{member.displayName} ({member.email})</span><RoleBadge owner={false} /></li>)}</ul> : <p className="mt-3 text-sm text-slate-500">No additional members yet.</p>}</div></section><ProjectTasks project={project} />{isOwner && <OverdueTaskReport projectId={project.id} />}</>}</div>{editOpen && <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/50 p-4" role="presentation"><div role="dialog" aria-modal="true" aria-labelledby="edit-project-title" className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-xl sm:p-7"><div className="flex items-start justify-between gap-4"><div><h2 id="edit-project-title" className="text-xl font-bold text-slate-900">Edit project</h2><p className="mt-1 text-sm text-slate-600">Update project information and team members.</p></div><button type="button" onClick={() => !saving && setEditOpen(false)} aria-label="Close edit project dialog" className="rounded-md p-2 text-xl leading-none text-slate-500 hover:bg-slate-100 disabled:opacity-50" disabled={saving}>×</button></div>{error && <p role="alert" className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}<form onSubmit={submit} className="mt-5"><label htmlFor="edit-project-name" className="block text-sm font-semibold text-slate-800">Name<input id="edit-project-name" autoFocus required maxLength={150} value={name} onChange={event => setName(event.target.value)} className={controlClass} /></label><label htmlFor="edit-project-description" className="mt-4 block text-sm font-semibold text-slate-800">Description<textarea id="edit-project-description" maxLength={2000} value={description} onChange={event => setDescription(event.target.value)} rows={5} className={controlClass} /></label><label htmlFor="edit-project-members" className="mt-4 block text-sm font-semibold text-slate-800">Member emails<span className="mt-1 block text-xs font-normal text-slate-500">Optional, comma-separated registered emails.</span><input id="edit-project-members" value={members} onChange={event => setMembers(event.target.value)} className={controlClass} /></label><div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button type="button" onClick={() => void remove()} disabled={saving} className="rounded-lg border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50 sm:mr-auto">Delete project</button><button type="button" onClick={() => setEditOpen(false)} disabled={saving} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Cancel</button><button disabled={saving} className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-400">{saving ? "Saving…" : "Save changes"}</button></div></form></div></div>}</main>;
 }
 
 export default function ProjectDetailsPage() { return <AuthGuard><ProjectDetailsContent /></AuthGuard>; }
