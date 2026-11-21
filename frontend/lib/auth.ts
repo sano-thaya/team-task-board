@@ -82,6 +82,9 @@ export function getAuthErrorMessage(error: unknown) {
     "auth/popup-closed-by-user": "The Google sign-in window was closed before completing.",
     "auth/popup-blocked": "Your browser blocked the Google sign-in window. Allow pop-ups and try again.",
     "auth/cancelled-popup-request": "Another sign-in request is already in progress.",
+    "auth/account-exists-with-different-credential": "An account already exists with this email. Sign in with the original method, then link Google from Firebase.",
+    "auth/operation-not-allowed": "Google Sign-In is not enabled for this Firebase project.",
+    "auth/network-request-failed": "The authentication request failed. Check your internet connection and try again.",
   };
 
   return messages[code] ?? (error instanceof Error ? error.message : "Something went wrong. Please try again.");
