@@ -10,4 +10,5 @@ public class Project
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
     public ICollection<ProjectMember> Members { get; set; } = new List<ProjectMember>();
+    public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
 }

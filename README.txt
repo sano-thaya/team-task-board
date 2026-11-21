@@ -36,3 +36,17 @@ Project API endpoints:
 The project schema is in the `AddProjects` migration. Apply it with `dotnet ef database update --project backend --startup-project backend` after configuring the MySQL connection string and Firebase settings. To regenerate a migration after model changes, use `dotnet ef migrations add <MigrationName> --project backend --startup-project backend`.
 
 Run the focused backend authorization tests with `dotnet test backend.Tests/TeamTaskBoard.Api.Tests.csproj`. These tests use EF Core in-memory data and cover project visibility and owner-only update/delete behavior.
+
+Task management
+---------------
+Project owners and members can create, view, edit, search, filter, and delete tasks from the authenticated project task screen at `/projects/{id}/tasks`. Task assignment is validated against project participants on the API; task timestamps are stored in UTC, and deleting a project cascades to its tasks.
+
+Task API endpoints:
+
+* `GET /api/projects/{projectId}/tasks?search=login&priority=High` lists accessible project tasks.
+* `GET /api/projects/{projectId}/tasks/{taskId}` returns task details.
+* `POST /api/projects/{projectId}/tasks` creates a task with `title`, `description`, `assignedUserId`, `priority`, `status`, and optional `dueDateUtc`.
+* `PUT /api/projects/{projectId}/tasks/{taskId}` updates those fields.
+* `DELETE /api/projects/{projectId}/tasks/{taskId}` deletes a task.
+
+Run `dotnet ef database update --project backend --startup-project backend` after configuring MySQL to apply the `AddTasks` migration. Run `dotnet test backend.Tests/TeamTaskBoard.Api.Tests.csproj` for task authorization and validation tests. The task UI uses the same Firebase ID token and `AuthGuard` as the existing project pages.

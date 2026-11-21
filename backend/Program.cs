@@ -6,6 +6,7 @@ using TeamTaskBoard.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using TeamTaskBoard.Api.Data;
 using Microsoft.AspNetCore.Authentication;
+using System.Text.Json.Serialization;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,7 +22,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 4, 13))));
 
 // Register MVC controllers and OpenAPI.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddCors(options =>
@@ -65,6 +70,7 @@ builder.Services.AddSingleton(FirebaseAuth.GetAuth(firebaseApp));
 builder.Services.AddScoped<FirebaseTokenService>();
 builder.Services.AddScoped<IUserSyncService, UserSyncService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<ITaskService, TaskService>();
 
 var app = builder.Build();
 

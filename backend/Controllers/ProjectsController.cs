@@ -81,7 +81,7 @@ public sealed record UpdateProjectRequest
 }
 
 /// <summary>Project member profile returned by the API.</summary>
-public sealed record ProjectUserResponse(string FirebaseUid, string DisplayName, string Email);
+public sealed record ProjectUserResponse(long Id, string FirebaseUid, string DisplayName, string Email);
 
 /// <summary>Project profile returned by the API.</summary>
 public sealed record ProjectResponse(long Id, string Name, string Description, ProjectUserResponse Owner, IReadOnlyList<ProjectUserResponse> Members, DateTime CreatedAtUtc, DateTime UpdatedAtUtc);

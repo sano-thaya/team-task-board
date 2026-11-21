@@ -62,3 +62,44 @@ Content-Type: application/json
 ###
 DELETE {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}
 Authorization: Bearer {{firebaseIdToken}}
+
+### List tasks, optionally using search and priority filtering
+GET {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}/tasks?search=login&priority=High
+Authorization: Bearer {{firebaseIdToken}}
+
+### Create a task; assignedUserId must be the owner or a project member
+POST {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}/tasks
+Authorization: Bearer {{firebaseIdToken}}
+Content-Type: application/json
+
+{
+  "title": "Fix login validation",
+  "description": "Add coverage for expired tokens.",
+  "assignedUserId": 1,
+  "priority": "High",
+  "status": "ToDo",
+  "dueDateUtc": "2026-12-01T23:59:59Z"
+}
+
+### Get, update, or delete a task by ID
+@taskId = 1
+GET {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}/tasks/{{taskId}}
+Authorization: Bearer {{firebaseIdToken}}
+
+###
+PUT {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}/tasks/{{taskId}}
+Authorization: Bearer {{firebaseIdToken}}
+Content-Type: application/json
+
+{
+  "title": "Fix login validation",
+  "description": "Completed token validation work.",
+  "assignedUserId": 1,
+  "priority": "High",
+  "status": "Completed",
+  "dueDateUtc": "2026-12-01T23:59:59Z"
+}
+
+###
+DELETE {{TeamTaskBoard.Api_HostAddress}}/api/projects/{{projectId}}/tasks/{{taskId}}
+Authorization: Bearer {{firebaseIdToken}}

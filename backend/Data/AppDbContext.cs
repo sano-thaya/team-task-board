@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<ProjectMember> ProjectMembers => Set<ProjectMember>();
+    public DbSet<TaskItem> Tasks => Set<TaskItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -80,6 +81,30 @@ public class AppDbContext : DbContext
                 .HasForeignKey(member => member.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(member => member.UserId);
+        });
+
+        modelBuilder.Entity<TaskItem>(entity =>
+        {
+            entity.ToTable("Tasks");
+            entity.HasKey(task => task.Id);
+            entity.Property(task => task.Title).IsRequired().HasMaxLength(150);
+            entity.Property(task => task.Description).IsRequired().HasMaxLength(2000);
+            entity.Property(task => task.Priority).IsRequired();
+            entity.Property(task => task.Status).IsRequired();
+            entity.Property(task => task.CreatedAtUtc).IsRequired();
+            entity.Property(task => task.UpdatedAtUtc).IsRequired();
+            entity.HasIndex(task => task.ProjectId);
+            entity.HasIndex(task => task.AssignedUserId);
+            entity.HasIndex(task => task.Status);
+            entity.HasIndex(task => task.Priority);
+            entity.HasOne(task => task.Project)
+                .WithMany(project => project.Tasks)
+                .HasForeignKey(task => task.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(task => task.AssignedUser)
+                .WithMany(user => user.AssignedTasks)
+                .HasForeignKey(task => task.AssignedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
