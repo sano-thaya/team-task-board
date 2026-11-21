@@ -1,0 +1,31 @@
+
+# .NET build output
+**/bin/
+**/obj/
+**/TestResults/
+**/.vs/
+*.user
+
+# Node.js
+**/node_modules/
+
+# Next.js
+**/.next/
+**/out/
+
+# Environment variables and secrets
+**/.env
+**/.env.*
+**/secrets/
+*.pem
+*.key
+
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
